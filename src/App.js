@@ -1,51 +1,95 @@
-import React from "react";
+import React, { Component } from 'react'
 import {
-  Container,
-  Header,
   Menu,
-  Button,
-  List,
-  Image
-} from "semantic-ui-react";
+} from "semantic-ui-react"
+import Book from "./Book"
 
-function App() {
-  return (
-    <div>
-      <Menu inverted>
-        <Menu.Item header>Bookliker</Menu.Item>
-      </Menu>
-      <main>
-        <Menu vertical inverted>
-          <Menu.Item as={"a"} onClick={e => console.log("book clicked!")}>
-            Book title
-          </Menu.Item>
-        </Menu>
-        <Container text>
-          <Header>Book title</Header>
-          <Image
-            src="https://react.semantic-ui.com/images/wireframe/image.png"
-            size="small"
-          />
-          <p>Book description</p>
-          <Button
-            color="red"
-            content="Like"
-            icon="heart"
-            label={{
-              basic: true,
-              color: "red",
-              pointing: "left",
-              content: "2,048"
-            }}
-          />
-          <Header>Liked by</Header>
-          <List>
-            <List.Item icon="user" content="User name" />
-          </List>
-        </Container>
-      </main>
-    </div>
-  );
+
+
+export class App extends Component {
+  state = {
+    books: [],
+    selectedBook: [],
+  }
+
+  componentDidMount() {
+    fetch('http://localhost:3000/books')
+    .then(res => res.json())
+    .then(books => {
+      this.setState({ books })
+    })
+  }
+
+  handleBookTitleClick = (book) => {
+    this.setState({
+      selectedBook: book,
+    })
+  }
+
+  handleLikeClick = (book) => {
+    const checkIfAlreadyLiked = this.state.selectedBook.users.find(user => user.id === 1)
+
+    if(checkIfAlreadyLiked === undefined) {
+        const formData = {
+            users: [
+              ...this.state.selectedBook.users,
+                {
+                    id: 1,
+                    username: "pouros" 
+                }
+            ]
+        }
+
+        const dataConfig = {
+            method: 'PATCH',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+
+            },
+            body: JSON.stringify(formData)
+        }
+
+        fetch(`http://localhost:3000/books/${book.id}`, dataConfig)
+
+        this.setState(prevState => {
+          return {
+            selectedBook: {
+              ...prevState.selectedBook,
+              users: [...prevState.selectedBook.users, {id: 1,username: "pouros" }]
+            }
+          }
+        })
+
+    } //if undefined 
+
 }
 
-export default App;
+  render() {
+    return (
+      <div>
+        <Menu inverted>
+          <Menu.Item header>Bookliker</Menu.Item>
+        </Menu>
+        <main>
+          <Menu vertical inverted>
+            {this.state.books.map(book => (
+              <Menu.Item as={"a"} onClick={() => this.handleBookTitleClick(book)}>
+                {book.title}
+              </Menu.Item>
+
+            ))}
+          </Menu>
+          {this.state.selectedBook.length !== 0 ?
+          <Book
+          book={this.state.selectedBook}
+          handleLikeClick={this.handleLikeClick}
+          /> 
+          : null}
+        </main>
+      </div>  
+    )
+  }
+}
+
+export default App
